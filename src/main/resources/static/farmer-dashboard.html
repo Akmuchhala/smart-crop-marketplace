@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Farmer Dashboard | Crop Mart</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <!-- Dashboard Navbar -->
+    <nav class="navbar glass">
+        <div class="nav-brand">
+            <span class="logo-icon">🌱</span>
+            <span class="logo-text">Crop Mart <small style="font-weight: 400; font-size: 0.9rem; color: var(--primary);">Farmer Panel</small></span>
+        </div>
+        <div class="nav-links">
+            <a href="#" class="active">My Listings</a>
+            <a href="#">Messages</a>
+        </div>
+        <div class="nav-actions">
+            <button class="btn btn-primary" onclick="openModal('add-crop-modal')">+ Add Crop</button>
+            <div class="profile-icon">👨‍🌾</div>
+        </div>
+    </nav>
+
+    <main class="dashboard-content" style="padding: 120px 5% 40px;">
+        <div class="dashboard-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+            <h2>My Active Crops</h2>
+            <div class="stats" style="display: flex; gap: 20px;">
+                <div class="stat-card glass" style="padding: 15px 25px; border-radius: 12px; text-align: center;">
+                    <div style="font-size: 1.5rem; font-weight: 700; color: var(--primary);">3</div>
+                    <div style="font-size: 0.85rem; color: var(--text-muted);">Total Listings</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Crop Grid -->
+        <div class="crop-grid" id="farmer-crops" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 24px;">
+            <!-- Mock Card 1 -->
+            <div class="crop-card glass" style="border-radius: 16px; overflow: hidden; transition: var(--transition);">
+                <div class="crop-image" style="height: 180px; background: url('https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?auto=format&fit=crop&w=600') center/cover;"></div>
+                <div class="crop-details" style="padding: 20px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <h3 style="font-size: 1.25rem;">Premium Wheat</h3>
+                        <span class="badge" style="margin: 0; padding: 4px 10px; font-size: 0.8rem;">Active</span>
+                    </div>
+                    <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 16px;">High quality organic wheat from Punjab. Available in large quantities.</p>
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="color: var(--primary); font-weight: 700; font-size: 1.2rem;">₹2,400 <small style="font-weight: 400; font-size: 0.8rem; color: var(--text-muted);">/ qtl</small></span>
+                        <div style="display: flex; gap: 8px;">
+                            <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.85rem;">Edit</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Add Crop Modal -->
+    <div id="add-crop-modal" class="modal-overlay">
+        <div class="modal glass-panel slide-down">
+            <button class="close-btn" onclick="closeModal('add-crop-modal')">&times;</button>
+            <h2>Add New Crop</h2>
+            <p>List your crop for buyers to see</p>
+            <form id="add-crop-form">
+                <div class="input-group">
+                    <label>Crop Name</label>
+                    <input type="text" required placeholder="e.g. Organic Tomatoes">
+                </div>
+                <div style="display: flex; gap: 16px;">
+                    <div class="input-group" style="flex: 1;">
+                        <label>Price (₹)</label>
+                        <input type="number" required placeholder="Per Quintal">
+                    </div>
+                    <div class="input-group" style="flex: 1;">
+                        <label>Quantity Available</label>
+                        <input type="number" required placeholder="In Quintals">
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label>Location / Farm Area</label>
+                    <input type="text" required placeholder="City, State">
+                </div>
+                <div class="input-group">
+                    <label>Description</label>
+                    <textarea required placeholder="Detailed description of the quality, farming methods, etc." style="width: 100%; padding: 14px 16px; background: hsla(0, 0%, 0%, 0.03); border: 1px solid hsla(0, 0%, 0%, 0.1); border-radius: 12px; color: var(--text-main); font-size: 1rem; font-family: 'Outfit', sans-serif; resize: vertical; min-height: 80px;"></textarea>
+                </div>
+                <div class="input-group">
+                    <label>Upload Media (Images/Videos)</label>
+                    <div style="border: 2px dashed hsla(0, 0%, 0%, 0.2); border-radius: 12px; padding: 30px; text-align: center; cursor: pointer; transition: var(--transition);" onmouseover="this.style.borderColor='var(--primary)'" onmouseout="this.style.borderColor='hsla(0, 0%, 0%, 0.2)'">
+                        <span style="font-size: 2rem;">📸</span>
+                        <p style="margin-top: 8px; color: var(--text-muted); font-size: 0.9rem;">Drag and drop or click to upload</p>
+                        <input type="file" multiple accept="image/*,video/*" style="display: none;">
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary w-100" style="margin-top: 10px;">Post Listing</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- AI Chatbot Trigger -->
+    <div class="chatbot-trigger glass pulse" onclick="toggleChatbot()">🤖</div>
+
+    <script src="js/main.js"></script>
+    <script>
+        document.getElementById('add-crop-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            alert("Crop Adding feature to be linked with Backend!");
+            closeModal('add-crop-modal');
+        });
+    </script>
+</body>
+</html>
