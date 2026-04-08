@@ -714,14 +714,56 @@ function login(data) {
 
 function logout() {
     const isFarmerDashboard = window.location.pathname.includes('farmer-dashboard.html');
-    
+
+    // Clear user authentication
     currentUser.isLoggedIn = false;
     currentUser.role = null;
     currentUser.name = null;
     currentUser.phone = null;
     sessionStorage.removeItem('currentUser');
     sessionStorage.removeItem('jwt');
-    
+
+    // Clear cart data to prevent showing previous user's cart
+    cartData = null;
+    const cartContainer = document.getElementById('cart-items-container');
+    if (cartContainer) {
+        cartContainer.innerHTML = '';
+    }
+    const cartBadge = document.getElementById('cart-badge');
+    if (cartBadge) {
+        cartBadge.style.display = 'none';
+        cartBadge.textContent = '0';
+    }
+
+    // Clear cart footer
+    const cartFooter = document.getElementById('cart-item-count-display');
+    if (cartFooter) {
+        cartFooter.innerHTML = '';
+    }
+
+    // Clear message/chat badge
+    const chatBadge = document.getElementById('chat-badge');
+    if (chatBadge) {
+        chatBadge.style.display = 'none';
+        chatBadge.textContent = '0';
+    }
+
+    // Clear farmer crops data
+    activeFarmerCrops = [];
+    const farmerCropsContainer = document.getElementById('farmer-crops');
+    if (farmerCropsContainer) {
+        farmerCropsContainer.innerHTML = '';
+    }
+
+    // Clear messages/conversations
+    const conversationsList = document.getElementById('conversations-list');
+    if (conversationsList) {
+        conversationsList.innerHTML = '';
+    }
+
+    // Close any open sidebars
+    closeCart();
+
     if (isFarmerDashboard) {
         // Redirect to home if logging out from a restricted area
         window.location.href = 'index.html';
@@ -780,24 +822,125 @@ function sendChangePwdOtp(e) {
 
 const changePwdOldForm = document.getElementById('changepwd-old-form');
 if (changePwdOldForm) {
-    changePwdOldForm.addEventListener('submit', (e) => {
+    changePwdOldForm.addEventListener('submit', async (e) => {
         e.preventDefault();
-        showToast('Password updated successfully.', 'success');
-        closeModal('change-password-modal');
+
+        const oldPassword = document.getElementById('changepwd-old-password').value;
+        const newPassword = document.getElementById('changepwd-new-password').value;
+
+        // Validate inputs
+        if (!oldPassword || !newPassword) {
+            showToast('Please fill in all fields', 'warning');
+            return;
+        }
+
+        if (newPassword.length < 6) {
+            showToast('New password must be at least 6 characters', 'warning');
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/auth/change-password', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${sessionStorage.getItem('jwt')}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    oldPassword: oldPassword,
+                    newPassword: newPassword
+                })
+            });
+
+            let errorMessage = '';
+            const responseText = await response.text();
+
+            try {
+                const data = JSON.parse(responseText);
+                errorMessage = data.message || data.error || responseText;
+            } catch (e) {
+                errorMessage = responseText;
+            }
+
+            if (!response.ok) {
+                showToast(errorMessage || 'Failed to change password', 'error');
+                return;
+            }
+
+            // Clear form
+            changePwdOldForm.reset();
+            showToast('Password changed successfully!', 'success');
+            closeModal('change-password-modal');
+        } catch (error) {
+            console.error('Error:', error);
+            showToast('Error changing password', 'error');
+        }
     });
 }
 
 const changePwdOtpForm = document.getElementById('changepwd-otp-form');
 if (changePwdOtpForm) {
-    changePwdOtpForm.addEventListener('submit', (e) => {
+    changePwdOtpForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const codeGroup = document.getElementById('changepwd-code-group');
         if (codeGroup && codeGroup.style.display === 'none') {
             sendChangePwdOtp();
             return;
         }
-        showToast('Password updated successfully.', 'success');
-        closeModal('change-password-modal');
+
+        const newPassword = document.getElementById('changepwd-new-password').value;
+
+        // Validate input
+        if (!newPassword) {
+            showToast('Please enter new password', 'warning');
+            return;
+        }
+
+        if (newPassword.length < 6) {
+            showToast('New password must be at least 6 characters', 'warning');
+            return;
+        }
+
+        try {
+            // For OTP method, we still verify the old password (since OTP is not implemented)
+            // In production, you'd verify the OTP code instead
+            const oldPassword = document.getElementById('changepwd-old-password-otp')?.value || '';
+
+            const response = await fetch('/api/auth/change-password', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${sessionStorage.getItem('jwt')}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    oldPassword: oldPassword || currentUser.password,
+                    newPassword: newPassword
+                })
+            });
+
+            let errorMessage = '';
+            const responseText = await response.text();
+
+            try {
+                const data = JSON.parse(responseText);
+                errorMessage = data.message || data.error || responseText;
+            } catch (e) {
+                errorMessage = responseText;
+            }
+
+            if (!response.ok) {
+                showToast(errorMessage || 'Failed to change password', 'error');
+                return;
+            }
+
+            // Clear form
+            changePwdOtpForm.reset();
+            showToast('Password changed successfully!', 'success');
+            closeModal('change-password-modal');
+        } catch (error) {
+            console.error('Error:', error);
+            showToast('Error changing password', 'error');
+        }
     });
 }
 
@@ -1816,4 +1959,138 @@ function startConversationPolling() {
 
 function stopConversationPolling() {
     if (conversationPollingInterval) clearInterval(conversationPollingInterval);
+}
+
+// ========== AI Assistant: Pricing Suggestions ==========
+
+let pricingSuggestionsCache = {};
+let pricingFetchTimeout;
+
+/**
+ * Fetch pricing suggestions from the AI service (debounced)
+ */
+function fetchPricingSuggestions() {
+    clearTimeout(pricingFetchTimeout);
+    pricingFetchTimeout = setTimeout(async () => {
+        const cropName = document.getElementById('add-crop-name-input')?.value || '';
+        const state = document.getElementById('add-crop-state')?.value || '';
+        const district = document.getElementById('add-crop-district')?.value || '';
+        const price = parseFloat(document.getElementById('add-crop-price-input')?.value || 0);
+
+        // Don't fetch if any required field is empty
+        if (!cropName || !state || !district) {
+            hidePricingPanel();
+            return;
+        }
+
+        const cacheKey = `${cropName}|${state}|${district}`;
+
+        // Check cache first
+        if (pricingSuggestionsCache[cacheKey]) {
+            showPricingPanel(pricingSuggestionsCache[cacheKey], price);
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/ai/crop-pricing', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...getAuthHeaders()
+                },
+                body: JSON.stringify({
+                    cropName: cropName,
+                    state: state,
+                    district: district,
+                    farmerPrice: price
+                })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                pricingSuggestionsCache[cacheKey] = data;
+                showPricingPanel(data, price);
+            } else {
+                hidePricingPanel();
+            }
+        } catch (error) {
+            console.error('Error fetching pricing suggestions:', error);
+            hidePricingPanel();
+        }
+    }, 600); // Debounce for 600ms
+}
+
+/**
+ * Display the pricing panel with suggestions
+ */
+function showPricingPanel(data, currentPrice) {
+    const panel = document.getElementById('pricing-panel');
+    const content = document.getElementById('pricing-content');
+    const loading = document.getElementById('pricing-loading');
+
+    if (!panel) return;
+
+    // Update pricing data
+    document.getElementById('pricing-min').textContent = Math.round(data.minPrice);
+    document.getElementById('pricing-max').textContent = Math.round(data.maxPrice);
+    document.getElementById('pricing-avg').textContent = Math.round(data.averagePrice);
+    document.getElementById('pricing-reasoning').textContent = data.reasoning;
+
+    // Update trend
+    const trendIcon = data.trend === 'rising' ? '📈' : data.trend === 'falling' ? '📉' : '➡️';
+    document.getElementById('trend-indicator').textContent = trendIcon;
+    document.getElementById('trend-pct').textContent = data.trendPercentage + '%';
+
+    // Update status badge
+    const badge = document.getElementById('price-status-badge');
+    badge.textContent = data.status === 'competitive' ? '✅ Competitive' : data.status === 'overpriced' ? '⚠️ High' : '📉 Low';
+
+    if (data.status === 'competitive') {
+        badge.style.background = 'hsla(142, 71%, 45%, 0.2)';
+        badge.style.color = 'hsl(142, 71%, 45%)';
+    } else if (data.status === 'overpriced') {
+        badge.style.background = 'hsla(38, 92%, 50%, 0.2)';
+        badge.style.color = 'hsl(38, 92%, 50%)';
+    } else {
+        badge.style.background = 'hsla(210, 100%, 50%, 0.2)';
+        badge.style.color = 'hsl(210, 100%, 50%)';
+    }
+
+    // Show panel
+    loading.style.display = 'none';
+    content.style.display = 'flex';
+    panel.style.display = 'flex';
+}
+
+/**
+ * Hide the pricing panel
+ */
+function hidePricingPanel() {
+    const panel = document.getElementById('pricing-panel');
+    if (panel) {
+        panel.style.display = 'none';
+    }
+}
+
+/**
+ * Update pricing status when user changes price
+ */
+function updatePricingStatus() {
+    const price = parseFloat(document.getElementById('add-crop-price-input')?.value || 0);
+    if (price > 0) {
+        fetchPricingSuggestions();
+    }
+}
+
+/**
+ * Apply market rate suggestion to price input
+ */
+function applyMarketPrice() {
+    const suggestedPrice = document.getElementById('pricing-avg');
+    if (suggestedPrice && suggestedPrice.textContent !== '-') {
+        const price = parseInt(suggestedPrice.textContent);
+        document.getElementById('add-crop-price-input').value = price;
+        showToast('Applied market rate price!', 'success');
+        updatePricingStatus();
+    }
 }

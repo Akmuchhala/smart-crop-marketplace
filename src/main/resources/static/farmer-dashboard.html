@@ -54,46 +54,78 @@
 
     <!-- Add Crop Modal -->
     <div id="add-crop-modal" class="modal-overlay">
-        <div class="modal glass-panel slide-down">
+        <div class="modal glass-panel slide-down" style="max-width: 1000px; display: flex; gap: 24px;">
             <button class="close-btn" onclick="closeModal('add-crop-modal')">&times;</button>
-            <h2>Add New Crop</h2>
-            <p>List your crop for buyers to see</p>
-            <form id="add-crop-form">
-                <div class="input-group">
-                    <label>Crop Name</label>
-                    <input type="text" name="crop-name" required placeholder="e.g. Organic Tomatoes">
-                </div>
-                <div style="display: flex; gap: 16px;">
-                    <div class="input-group" style="flex: 1;">
-                        <label>Price (₹)</label>
-                        <input type="number" name="crop-price" required placeholder="Per Quintal">
+            <div style="flex: 1;">
+                <h2>Add New Crop</h2>
+                <p>List your crop for buyers to see</p>
+                <form id="add-crop-form">
+                    <div class="input-group">
+                        <label>Crop Name</label>
+                        <input type="text" name="crop-name" id="add-crop-name-input" required placeholder="e.g. Organic Tomatoes" oninput="fetchPricingSuggestions()">
                     </div>
-                    <div class="input-group" style="flex: 1;">
-                        <label>Quantity Available</label>
-                        <input type="number" name="crop-quantity" required placeholder="In Quintals">
+                    <div style="display: flex; gap: 16px;">
+                        <div class="input-group" style="flex: 1;">
+                            <label>Price (₹)</label>
+                            <input type="number" name="crop-price" id="add-crop-price-input" required placeholder="Per Quintal" oninput="updatePricingStatus()">
+                        </div>
+                        <div class="input-group" style="flex: 1;">
+                            <label>Quantity Available</label>
+                            <input type="number" name="crop-quantity" required placeholder="In Quintals">
+                        </div>
                     </div>
-                </div>
-                <div style="display: flex; gap: 16px;">
-                    <div class="input-group" style="flex: 1;">
-                        <label>State</label>
-                        <input type="text" id="add-crop-state" name="crop-state" list="state-list" required placeholder="Select State" oninput="populateDistricts(this.value, 'add-district-list', 'add-crop-district')">
+                    <div style="display: flex; gap: 16px;">
+                        <div class="input-group" style="flex: 1;">
+                            <label>State</label>
+                            <input type="text" id="add-crop-state" name="crop-state" list="state-list" required placeholder="Select State" oninput="populateDistricts(this.value, 'add-district-list', 'add-crop-district'); fetchPricingSuggestions();">
+                        </div>
+                        <div class="input-group" style="flex: 1;">
+                            <label>District</label>
+                            <input type="text" id="add-crop-district" name="crop-district" list="add-district-list" required placeholder="Select District" oninput="fetchPricingSuggestions()">
+                            <datalist id="add-district-list"></datalist>
+                        </div>
                     </div>
-                    <div class="input-group" style="flex: 1;">
-                        <label>District</label>
-                        <input type="text" id="add-crop-district" name="crop-district" list="add-district-list" required placeholder="Select District">
-                        <datalist id="add-district-list"></datalist>
+                    <div class="input-group">
+                        <label>Description</label>
+                        <textarea name="crop-description" required placeholder="Detailed description..." style="width: 100%; padding: 14px 16px; background: hsla(0, 0%, 0%, 0.03); border: 1px solid hsla(0, 0%, 0%, 0.1); border-radius: 12px; color: var(--text-main); font-size: 1rem; font-family: 'Outfit', sans-serif; resize: vertical; min-height: 80px;"></textarea>
                     </div>
+                    <div class="input-group">
+                        <label>Upload Media (Photos/Videos - Max 5)</label>
+                        <input type="file" id="add-crop-media" accept="image/*,video/*" multiple required style="width: 100%; padding: 10px; background: hsla(0, 0%, 0%, 0.03); border: 1px solid hsla(0, 0%, 0%, 0.1); border-radius: 12px; color: var(--text-main); font-family: 'Outfit', sans-serif;">
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100" style="margin-top: 10px;">Post Listing</button>
+                </form>
+            </div>
+            <!-- Pricing Panel -->
+            <div id="pricing-panel" style="width: 280px; padding: 20px; background: hsla(142, 71%, 45%, 0.05); border: 1px solid hsla(142, 71%, 45%, 0.2); border-radius: 16px; display: none; flex-direction: column; gap: 16px;">
+                <h3 style="margin: 0; font-size: 1rem; color: var(--text-main);">🎯 Market Analysis</h3>
+                <div id="pricing-loading" style="text-align: center; color: var(--text-muted); font-size: 0.9rem;">Analyzing market...</div>
+                <div id="pricing-content" style="display: none; gap: 16px; display: flex; flex-direction: column;">
+                    <div>
+                        <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 4px;">Price Range</div>
+                        <div style="font-weight: 600; color: var(--primary); font-size: 1.1rem;">₹<span id="pricing-min">-</span> - ₹<span id="pricing-max">-</span></div>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 4px;">Market Average</div>
+                        <div style="font-weight: 600; color: var(--text-main); font-size: 1rem;">₹<span id="pricing-avg">-</span></div>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 4px;">Your Price Status</div>
+                        <div id="price-status-badge" style="display: inline-block; padding: 6px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: 600;">-</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 4px;">Trend</div>
+                        <div style="font-weight: 600; color: var(--text-main);">
+                            <span id="trend-indicator">-</span>
+                            <span id="trend-pct" style="color: var(--primary);">-</span>
+                        </div>
+                    </div>
+                    <div id="pricing-reasoning" style="padding: 12px; background: white; border-radius: 8px; font-size: 0.85rem; color: var(--text-muted); border-left: 3px solid var(--primary);">
+                        -
+                    </div>
+                    <button type="button" onclick="applyMarketPrice()" class="btn btn-primary" style="width: 100%; padding: 10px; font-size: 0.9rem;">Use Market Rate</button>
                 </div>
-                <div class="input-group">
-                    <label>Description</label>
-                    <textarea name="crop-description" required placeholder="Detailed description..." style="width: 100%; padding: 14px 16px; background: hsla(0, 0%, 0%, 0.03); border: 1px solid hsla(0, 0%, 0%, 0.1); border-radius: 12px; color: var(--text-main); font-size: 1rem; font-family: 'Outfit', sans-serif; resize: vertical; min-height: 80px;"></textarea>
-                </div>
-                <div class="input-group">
-                    <label>Upload Media (Photos/Videos - Max 5)</label>
-                    <input type="file" id="add-crop-media" accept="image/*,video/*" multiple required style="width: 100%; padding: 10px; background: hsla(0, 0%, 0%, 0.03); border: 1px solid hsla(0, 0%, 0%, 0.1); border-radius: 12px; color: var(--text-main); font-family: 'Outfit', sans-serif;">
-                </div>
-                <button type="submit" class="btn btn-primary w-100" style="margin-top: 10px;">Post Listing</button>
-            </form>
+            </div>
         </div>
     </div>
 
@@ -225,14 +257,14 @@
                 <div class="input-group">
                     <label>Current Password</label>
                     <div class="password-wrapper">
-                        <input type="password" name="old-password" required placeholder="Enter current password">
+                        <input type="password" id="changepwd-old-password" name="old-password" required placeholder="Enter current password">
                         <button type="button" class="toggle-password" onclick="togglePassword(this)">👁️</button>
                     </div>
                 </div>
                 <div class="input-group">
                     <label>New Password</label>
                     <div class="password-wrapper">
-                        <input type="password" name="password" required placeholder="Enter new password">
+                        <input type="password" id="changepwd-new-password" name="password" required placeholder="Enter new password">
                         <button type="button" class="toggle-password" onclick="togglePassword(this)">👁️</button>
                     </div>
                 </div>
@@ -247,13 +279,20 @@
                 </div>
                 <div id="changepwd-code-group" style="display: none;">
                     <div class="input-group">
+                        <label>Current Password</label>
+                        <div class="password-wrapper">
+                            <input type="password" id="changepwd-old-password-otp" placeholder="Enter current password">
+                            <button type="button" class="toggle-password" onclick="togglePassword(this)">👁️</button>
+                        </div>
+                    </div>
+                    <div class="input-group">
                         <label>Enter OTP</label>
                         <input type="text" id="changepwd-code" placeholder="Enter 6-digit OTP" inputmode="numeric" pattern="\d*" maxlength="6" oninput="this.value = this.value.replace(/[^0-9]/g, '');">
                     </div>
                     <div class="input-group">
                         <label>New Password</label>
                         <div class="password-wrapper">
-                            <input type="password" id="changepwd-new-password" placeholder="Enter new password">
+                            <input type="password" id="changepwd-new-password-otp" placeholder="Enter new password">
                             <button type="button" class="toggle-password" onclick="togglePassword(this)">👁️</button>
                         </div>
                     </div>

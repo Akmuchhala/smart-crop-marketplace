@@ -8,6 +8,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
@@ -18,6 +20,7 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/auth")
+@CrossOrigin(origins = "*", allowedHeaders = "*")
 public class AuthController {
 
     @Autowired
@@ -67,13 +70,78 @@ public class AuthController {
 
         final UserDetails userDetails = userDetailsService.loadUserByUsername(loginRequest.getPhone());
         final String jwt = jwtUtils.generateToken(userDetails);
-        
+
         Optional<User> user = userRepository.findByPhone(loginRequest.getPhone());
-        
+
         Map<String, Object> response = new HashMap<>();
         response.put("jwt", jwt);
         response.put("user", user.get());
-        
+
         return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Change password with old password verification
+     * POST /api/auth/change-password
+     * Body: { "oldPassword": "...", "newPassword": "..." }
+     */
+    @PostMapping("/change-password")
+    public ResponseEntity<?> changePassword(@RequestBody ChangePasswordRequest request) {
+        try {
+            // Get authenticated user from security context
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            if (authentication == null || !authentication.isAuthenticated()) {
+                return ResponseEntity.status(401).body("User not authenticated");
+            }
+
+            String phone = authentication.getName();
+
+            // Find user by phone
+            Optional<User> optionalUser = userRepository.findByPhone(phone);
+            if (!optionalUser.isPresent()) {
+                return ResponseEntity.status(404).body("User not found");
+            }
+
+            User user = optionalUser.get();
+
+            // Verify old password
+            if (!passwordEncoder.matches(request.getOldPassword(), user.getPassword())) {
+                return ResponseEntity.status(401).body("Old password is incorrect");
+            }
+
+            // Validate new password
+            if (request.getNewPassword() == null || request.getNewPassword().isEmpty()) {
+                return ResponseEntity.badRequest().body("New password cannot be empty");
+            }
+
+            if (request.getNewPassword().length() < 6) {
+                return ResponseEntity.badRequest().body("New password must be at least 6 characters");
+            }
+
+            // Update password
+            user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+            userRepository.save(user);
+
+            return ResponseEntity.ok(new HashMap<String, String>() {{
+                put("message", "Password changed successfully");
+            }});
+
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Error changing password: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Request body for changing password
+     */
+    public static class ChangePasswordRequest {
+        private String oldPassword;
+        private String newPassword;
+
+        public String getOldPassword() { return oldPassword; }
+        public void setOldPassword(String oldPassword) { this.oldPassword = oldPassword; }
+
+        public String getNewPassword() { return newPassword; }
+        public void setNewPassword(String newPassword) { this.newPassword = newPassword; }
     }
 }
