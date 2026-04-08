@@ -16,3 +16,4 @@ build/
 .checkstyle
 .springBeans
 .factorypath
+uploads/
