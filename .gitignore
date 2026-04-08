@@ -17,3 +17,7 @@ build/
 .springBeans
 .factorypath
 uploads/
+# Environment variables - NEVER commit
+.env
+.env.local
+.env.*.local

@@ -1,0 +1,19 @@
+spring:
+  application:
+    name: marketplace
+  data:
+    mongodb:
+      uri: ${MONGO_URI:mongodb+srv://localhost/marketplace}
+  servlet:
+    multipart:
+      max-file-size: 200MB
+      max-request-size: 1000MB
+  web:
+    resources:
+      static-locations: classpath:/static/
+
+server:
+  port: 8080
+
+jwt:
+  secret: ${JWT_SECRET:dev_secret_key_for_local_testing_only}

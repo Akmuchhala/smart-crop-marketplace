@@ -477,7 +477,7 @@ async function renderMarketplaceCrops() {
 
                     <div style="display: flex; gap: 12px;">
                         <button class="btn btn-secondary" style="flex: 1;" onclick="viewCropDetails('${crop.id}', '${crop.name}', '${crop.location}', ${crop.price}, '${crop.farmerName}', '${crop.farmerPhone}', '${crop.image || ''}', '${encodeURIComponent(JSON.stringify(crop.images || []))}')">View Details</button>
-                        <button class="btn btn-primary" style="flex: 1;" onclick="addToCart('${crop.name}', ${crop.price})">Add to Cart</button>
+                        <button class="btn btn-primary" style="flex: 1;" onclick="addToCart('${crop.id}')">Add to Cart</button>
                     </div>
                 </div>
             </div>
@@ -829,8 +829,7 @@ document.addEventListener("DOMContentLoaded", () => {
     renderFarmerCrops();
     renderMarketplaceCrops();
     startConversationPolling();
-    loadCartFromStorage();
-    updateCartUI();
+    loadCartFromBackend();
 
     // Attach Form Submissions after DOM is ready
     const addCropForm = document.getElementById('add-crop-form');
@@ -1181,51 +1180,206 @@ function handleBuyerSearch() {
     }
 }
 
-// ========== Cart Logic ==========
-let cartItems = [];
+// ========== Cart Logic (Backend API) ==========
+let cartData = null;
 
-function loadCartFromStorage() {
+/**
+ * Get JWT token from sessionStorage
+ */
+function getAuthToken() {
+    return sessionStorage.getItem('jwt');
+}
+
+/**
+ * Load cart from backend
+ */
+async function loadCartFromBackend() {
     try {
-        const saved = localStorage.getItem('marketplace_cart');
-        if (saved) cartItems = JSON.parse(saved);
-        if (!Array.isArray(cartItems)) cartItems = [];
-    } catch(e) {
-        cartItems = [];
-    }
-}
+        const token = getAuthToken();
+        if (!token) {
+            cartData = null;
+            return;
+        }
 
-function saveCart() {
-    localStorage.setItem('marketplace_cart', JSON.stringify(cartItems));
-}
+        const response = await fetch('/api/cart', {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
 
-function addToCart(itemName, price) {
-    const existingItem = cartItems.find(item => item.name === itemName);
-    if (existingItem) {
-        existingItem.quantity += 1;
-    } else {
-        cartItems.push({ name: itemName, price: price, quantity: 1 });
-    }
-    
-    saveCart();
-    
-    updateCartUI();
-    showToast(`Added ${itemName} to your cart.`, 'success');
-}
+        if (!response.ok) {
+            if (response.status === 401) {
+                // User not authenticated
+                cartData = null;
+                return;
+            }
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
 
-function removeFromCart(index) {
-    if (index >= 0 && index < cartItems.length) {
-        const removedItem = cartItems.splice(index, 1)[0];
-        saveCart();
+        cartData = await response.json();
         updateCartUI();
-        showToast(`Removed ${removedItem.name} from cart.`, 'info');
+    } catch (error) {
+        console.error('Error loading cart:', error);
+        showToast('Error loading cart', 'error');
     }
 }
 
+/**
+ * Add item to cart
+ */
+async function addToCart(cropId) {
+    try {
+        const token = getAuthToken();
+        if (!token) {
+            showToast('Please log in to add items to cart', 'warning');
+            return;
+        }
+
+        const response = await fetch('/api/cart/add', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                cropId: cropId,
+                quantity: 1
+            })
+        });
+
+        if (!response.ok) {
+            const errorMsg = await response.text();
+            throw new Error(errorMsg);
+        }
+
+        cartData = await response.json();
+        updateCartUI();
+
+        // Get crop name for toast
+        const crop = document.querySelector(`button[onclick="addToCart('${cropId}')"]`)
+            ?.closest('.crop-card')
+            ?.querySelector('h3')?.textContent || 'Item';
+        showToast(`Added ${crop} to your cart.`, 'success');
+    } catch (error) {
+        console.error('Error adding to cart:', error);
+        showToast('Error adding item to cart: ' + error.message, 'error');
+    }
+}
+
+/**
+ * Remove item from cart
+ */
+async function removeFromCart(cropId) {
+    try {
+        const token = getAuthToken();
+        if (!token) return;
+
+        const response = await fetch(`/api/cart/remove/${cropId}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        cartData = await response.json();
+        updateCartUI();
+        showToast('Item removed from cart', 'info');
+    } catch (error) {
+        console.error('Error removing from cart:', error);
+        showToast('Error removing item from cart', 'error');
+    }
+}
+
+/**
+ * Update cart item quantity
+ */
+async function updateCartItemQuantity(cropId, newQuantity) {
+    try {
+        const token = getAuthToken();
+        if (!token) return;
+
+        if (newQuantity <= 0) {
+            await removeFromCart(cropId);
+            return;
+        }
+
+        const response = await fetch(`/api/cart/update/${cropId}`, {
+            method: 'PUT',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                quantity: newQuantity
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        cartData = await response.json();
+        updateCartUI();
+    } catch (error) {
+        console.error('Error updating cart:', error);
+        showToast('Error updating cart', 'error');
+    }
+}
+
+/**
+ * View crop details from cart - fetch full crop data and open details modal
+ */
+async function viewCropDetailsFromCart(cropId) {
+    try {
+        // Fetch crop details
+        const response = await fetch('/api/crops');
+        if (!response.ok) throw new Error('Failed to fetch crops');
+
+        const crops = await response.json();
+        const crop = crops.find(c => c.id === cropId);
+
+        if (!crop) {
+            showToast('Crop details not found', 'error');
+            return;
+        }
+
+        // Call existing viewCropDetails function with fetched data
+        const imagesStr = crop.images && crop.images.length > 0
+            ? encodeURIComponent(JSON.stringify(crop.images))
+            : encodeURIComponent(JSON.stringify(crop.image ? [crop.image] : []));
+
+        viewCropDetails(
+            crop.id,
+            crop.name,
+            crop.location,
+            crop.price,
+            crop.farmerName,
+            crop.farmerPhone,
+            crop.image || '',
+            imagesStr
+        );
+    } catch (error) {
+        console.error('Error fetching crop details:', error);
+        showToast('Error loading crop details', 'error');
+    }
+}
+
+/**
+ * Update cart UI from cartData
+ */
 function updateCartUI() {
     // Update badge
     const badge = document.getElementById('cart-badge');
-    const totalQuantity = cartItems.reduce((sum, item) => sum + item.quantity, 0);
-    
+    const totalQuantity = cartData && cartData.items ?
+        cartData.items.reduce((sum, item) => sum + item.quantity, 0) : 0;
+
     if (badge) {
         badge.textContent = totalQuantity;
         badge.style.display = totalQuantity > 0 ? 'flex' : 'none';
@@ -1240,41 +1394,60 @@ function updateCartUI() {
     const container = document.getElementById('cart-items-container');
     if (!container) return;
 
-    let total = 0;
     container.innerHTML = '';
 
-    if (cartItems.length === 0) {
+    if (!cartData || !cartData.items || cartData.items.length === 0) {
         container.innerHTML = '<p style="color: var(--text-muted); text-align: center; margin-top: 40px;">Your cart is empty.</p>';
         const countEl = document.getElementById('cart-total-items-count');
         if (countEl) countEl.textContent = '0';
         return;
     }
 
-    cartItems.forEach((item, index) => {
+    let cartTotal = 0;
+    cartData.items.forEach((item) => {
+        const itemSubtotal = (item.price || 0) * (item.quantity || 0);
+        cartTotal += itemSubtotal;
+
         container.innerHTML += `
-            <div class="cart-item fade-in">
-                <div class="cart-item-info">
-                    <h4 style="cursor: pointer; opacity: 0.9; transition: opacity 0.2s;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.9'" onclick="viewCartItem('${item.name}')">${item.name}</h4>
-                    <p>Quantity: ${item.quantity}</p>
-                    <button class="cart-item-remove" onclick="removeFromCart(${index})">Remove</button>
+            <div class="cart-item fade-in" style="display: flex; gap: 12px; padding: 12px; margin-bottom: 8px; background: var(--bg-card); border-radius: 8px; cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='var(--bg-hover)'" onmouseout="this.style.background='var(--bg-card)'">
+                <div style="width: 90px; height: 90px; flex-shrink: 0; border-radius: 8px; overflow: hidden; background: var(--bg-hover);">
+                    <img src="${item.image || '/images/placeholder.jpg'}" alt="${item.cropName}" style="width: 100%; height: 100%; object-fit: cover; cursor: pointer;" onclick="closeCart(); viewCropDetailsFromCart('${item.cropId}')">
+                </div>
+                <div class="cart-item-info" style="flex: 1;">
+                    <h4 style="margin: 0 0 6px 0; font-size: 0.95rem; cursor: pointer; color: var(--primary);" onclick="closeCart(); viewCropDetailsFromCart('${item.cropId}')">${item.cropName}</h4>
+                    <p style="margin: 4px 0; font-size: 0.85rem; color: var(--text-muted);">₹${(item.price || 0).toLocaleString()}/quintal</p>
+                    <div style="display: flex; align-items: center; gap: 6px; margin-top: 8px;">
+                        <button style="background: var(--primary); color: white; border: none; padding: 4px 8px; cursor: pointer; border-radius: 4px; font-size: 0.8rem; font-weight: 600;" onclick="updateCartItemQuantity('${item.cropId}', ${item.quantity - 1})">−</button>
+                        <span style="min-width: 28px; text-align: center; font-weight: 600; font-size: 0.9rem;">${parseInt(item.quantity)}</span>
+                        <button style="background: var(--primary); color: white; border: none; padding: 4px 8px; cursor: pointer; border-radius: 4px; font-size: 0.8rem; font-weight: 600;" onclick="updateCartItemQuantity('${item.cropId}', ${item.quantity + 1})">+</button>
+                        <button onclick="removeFromCart('${item.cropId}'); event.stopPropagation();" style="background: none; border: none; color: #ef4444; cursor: pointer; opacity: 0.8; transition: opacity 0.2s; font-size: 0.75rem; padding: 0; margin-left: auto; text-decoration: underline; font-weight: 500;">Remove</button>
+                    </div>
                 </div>
             </div>
         `;
     });
 
+    // Update total items count
     const countEl = document.getElementById('cart-total-items-count');
-    if (countEl) countEl.textContent = cartItems.length;
-}
+    if (countEl) countEl.textContent = cartData.items.length;
 
-function viewCartItem(itemName) {
-    const cards = document.querySelectorAll('.crop-card');
-    for (let card of cards) {
-        if (card.querySelector('h3').textContent === itemName) {
-            card.querySelector('.btn-secondary').click();
-            closeCart();
-            return;
+    // Add total at bottom
+    const footer = document.querySelector('.cart-footer');
+    if (footer) {
+        const cartTotalDisplay = footer.querySelector('#cart-item-count-display');
+        if (cartTotalDisplay) {
+            cartTotalDisplay.innerHTML = `
+                <div style="text-align: center; padding: 12px 0;">
+                    <span style="font-size: 0.9rem; color: var(--text-muted);">Items in cart: </span>
+                    <span style="font-weight: 700; font-size: 1.1rem; color: var(--primary);">${cartData.items.length}</span>
+                </div>
+            `;
         }
     }
+}
+
+function viewCartItem(cropName) {
+    closeCart();
 }
 
 
@@ -1284,6 +1457,8 @@ function openCart() {
     if (overlay) {
         overlay.classList.add('active');
         document.body.style.overflow = 'hidden';
+        // Reload cart from backend when opening
+        loadCartFromBackend();
     }
 }
 
@@ -1294,13 +1469,6 @@ function closeCart(e) {
         overlay.classList.remove('active');
         document.body.style.overflow = '';
     }
-}
-
-function viewCartItem(itemName) {
-    closeCart();
-    // For the current setup, we open the mock details modal
-    // In a production system, this would retrieve the specific item ID and populate the modal
-    openModal('crop-details-modal');
 }
 
 // ========== Farmer Crop Management ==========
@@ -1334,16 +1502,26 @@ function editCrop(id) {
     openModal('edit-crop-modal');
 }
 
-function deleteCrop(id) {
+async function deleteCrop(id) {
     if (confirm("Are you sure you want to delete this listing?")) {
         const card = document.getElementById(`card-${id}`);
         if (card) {
             card.style.opacity = '0';
             card.style.transform = 'scale(0.9)';
-            setTimeout(() => {
-                removeCropFromDb(id);
-                renderFarmerCrops(); // This also calls updateListingCount()
-                showToast("Listing deleted successfully.", "success");
+            setTimeout(async () => {
+                // Wait for the deletion to complete before re-rendering
+                const deleted = await removeCropFromDb(id);
+                if (deleted) {
+                    // Remove from local activeFarmerCrops array for instant update
+                    activeFarmerCrops = activeFarmerCrops.filter(crop => crop.id !== id);
+                    renderFarmerCrops(); // This also calls updateListingCount()
+                    showToast("Listing deleted successfully.", "success");
+                } else {
+                    showToast("Failed to delete listing.", "error");
+                    // Revert animation if deletion failed
+                    card.style.opacity = '1';
+                    card.style.transform = 'scale(1)';
+                }
             }, 300);
         }
     }
