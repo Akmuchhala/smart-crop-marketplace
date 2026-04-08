@@ -15,12 +15,23 @@
             <span class="logo-text">Crop Mart <small style="font-weight: 400; font-size: 0.9rem; color: var(--primary);">Farmer Panel</small></span>
         </div>
         <div class="nav-links">
-            <a href="#" class="active">My Listings</a>
-            <a href="#">Messages</a>
+            <a href="#" class="btn" onclick="toggleChatSidebar()" style="display: flex; align-items: center; gap: 8px; padding: 10px 20px; border-radius: 12px; font-weight: 600; font-size: 0.9rem; text-decoration: none; position: relative; background: hsla(0, 0%, 0%, 0.05); border: 1px solid var(--border-color); color: var(--text-main);">
+                <span style="font-size: 1.1rem;">💬</span> INQUIRIES
+                <span id="chat-badge" style="position: absolute; top: -8px; right: -8px; background: var(--secondary); color: white; border-radius: 50%; font-size: 0.65rem; width: 20px; height: 20px; display: none; align-items: center; justify-content: center; font-weight: bold; border: 2px solid var(--bg-card);">0</span>
+            </a>
         </div>
-        <div class="nav-actions">
+        <div class="nav-actions" style="display: flex; gap: 16px; align-items: center;">
             <button class="btn btn-primary" onclick="openModal('add-crop-modal')">+ Add Crop</button>
-            <div class="profile-icon">👨‍🌾</div>
+            <div class="nav-item profile-dropdown" style="display: flex; align-items: center; height: auto;">
+                <div class="icon-btn">👤</div>
+                <div class="mega-menu glass-panel" style="min-width: 250px; padding: 15px;">
+                    <div class="mega-menu-content">
+                        <div class="mega-menu-column" id="account-dropdown-menu">
+                            <!-- Injected dynamically via JS based on auth state -->
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </nav>
 
@@ -29,7 +40,7 @@
             <h2>My Active Crops</h2>
             <div class="stats" style="display: flex; gap: 20px;">
                 <div class="stat-card glass" style="padding: 15px 25px; border-radius: 12px; text-align: center;">
-                    <div style="font-size: 1.5rem; font-weight: 700; color: var(--primary);">3</div>
+                    <div id="total-listings-count" style="font-size: 1.5rem; font-weight: 700; color: var(--primary);">0</div>
                     <div style="font-size: 0.85rem; color: var(--text-muted);">Total Listings</div>
                 </div>
             </div>
@@ -37,23 +48,7 @@
 
         <!-- Crop Grid -->
         <div class="crop-grid" id="farmer-crops" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 24px;">
-            <!-- Mock Card 1 -->
-            <div class="crop-card glass" style="border-radius: 16px; overflow: hidden; transition: var(--transition);">
-                <div class="crop-image" style="height: 180px; background: url('https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?auto=format&fit=crop&w=600') center/cover;"></div>
-                <div class="crop-details" style="padding: 20px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                        <h3 style="font-size: 1.25rem;">Premium Wheat</h3>
-                        <span class="badge" style="margin: 0; padding: 4px 10px; font-size: 0.8rem;">Active</span>
-                    </div>
-                    <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 16px;">High quality organic wheat from Punjab. Available in large quantities.</p>
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <span style="color: var(--primary); font-weight: 700; font-size: 1.2rem;">₹2,400 <small style="font-weight: 400; font-size: 0.8rem; color: var(--text-muted);">/ qtl</small></span>
-                        <div style="display: flex; gap: 8px;">
-                            <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.85rem;">Edit</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <!-- Rendered Dynamically via JS -->
         </div>
     </main>
 
@@ -66,35 +61,116 @@
             <form id="add-crop-form">
                 <div class="input-group">
                     <label>Crop Name</label>
-                    <input type="text" required placeholder="e.g. Organic Tomatoes">
+                    <input type="text" name="crop-name" required placeholder="e.g. Organic Tomatoes">
                 </div>
                 <div style="display: flex; gap: 16px;">
                     <div class="input-group" style="flex: 1;">
                         <label>Price (₹)</label>
-                        <input type="number" required placeholder="Per Quintal">
+                        <input type="number" name="crop-price" required placeholder="Per Quintal">
                     </div>
                     <div class="input-group" style="flex: 1;">
                         <label>Quantity Available</label>
-                        <input type="number" required placeholder="In Quintals">
+                        <input type="number" name="crop-quantity" required placeholder="In Quintals">
                     </div>
                 </div>
-                <div class="input-group">
-                    <label>Location / Farm Area</label>
-                    <input type="text" required placeholder="City, State">
+                <div style="display: flex; gap: 16px;">
+                    <div class="input-group" style="flex: 1;">
+                        <label>State</label>
+                        <input type="text" id="add-crop-state" name="crop-state" list="state-list" required placeholder="Select State" oninput="populateDistricts(this.value, 'add-district-list', 'add-crop-district')">
+                    </div>
+                    <div class="input-group" style="flex: 1;">
+                        <label>District</label>
+                        <input type="text" id="add-crop-district" name="crop-district" list="add-district-list" required placeholder="Select District">
+                        <datalist id="add-district-list"></datalist>
+                    </div>
                 </div>
                 <div class="input-group">
                     <label>Description</label>
-                    <textarea required placeholder="Detailed description of the quality, farming methods, etc." style="width: 100%; padding: 14px 16px; background: hsla(0, 0%, 0%, 0.03); border: 1px solid hsla(0, 0%, 0%, 0.1); border-radius: 12px; color: var(--text-main); font-size: 1rem; font-family: 'Outfit', sans-serif; resize: vertical; min-height: 80px;"></textarea>
+                    <textarea name="crop-description" required placeholder="Detailed description..." style="width: 100%; padding: 14px 16px; background: hsla(0, 0%, 0%, 0.03); border: 1px solid hsla(0, 0%, 0%, 0.1); border-radius: 12px; color: var(--text-main); font-size: 1rem; font-family: 'Outfit', sans-serif; resize: vertical; min-height: 80px;"></textarea>
                 </div>
                 <div class="input-group">
-                    <label>Upload Media (Images/Videos)</label>
-                    <div style="border: 2px dashed hsla(0, 0%, 0%, 0.2); border-radius: 12px; padding: 30px; text-align: center; cursor: pointer; transition: var(--transition);" onmouseover="this.style.borderColor='var(--primary)'" onmouseout="this.style.borderColor='hsla(0, 0%, 0%, 0.2)'">
-                        <span style="font-size: 2rem;">📸</span>
-                        <p style="margin-top: 8px; color: var(--text-muted); font-size: 0.9rem;">Drag and drop or click to upload</p>
-                        <input type="file" multiple accept="image/*,video/*" style="display: none;">
-                    </div>
+                    <label>Upload Media (Photos/Videos - Max 5)</label>
+                    <input type="file" id="add-crop-media" accept="image/*,video/*" multiple required style="width: 100%; padding: 10px; background: hsla(0, 0%, 0%, 0.03); border: 1px solid hsla(0, 0%, 0%, 0.1); border-radius: 12px; color: var(--text-main); font-family: 'Outfit', sans-serif;">
                 </div>
                 <button type="submit" class="btn btn-primary w-100" style="margin-top: 10px;">Post Listing</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Crop Modal -->
+    <div id="edit-crop-modal" class="modal-overlay">
+        <div class="modal glass-panel slide-down">
+            <button class="close-btn" onclick="closeModal('edit-crop-modal')">&times;</button>
+            <h2>Edit Crop Listing</h2>
+            <p>Update your crop details</p>
+            <form id="edit-crop-form">
+                <input type="hidden" id="edit-crop-id">
+                <div class="input-group">
+                    <label>Crop Name</label>
+                    <input type="text" id="edit-crop-name" required placeholder="e.g. Organic Tomatoes">
+                </div>
+                <div style="display: flex; gap: 16px;">
+                    <div class="input-group" style="flex: 1;">
+                        <label>Price (₹)</label>
+                        <input type="number" id="edit-crop-price" required placeholder="Per Quintal">
+                    </div>
+                    <div class="input-group" style="flex: 1;">
+                        <label>Quantity Available</label>
+                        <input type="number" id="edit-crop-quantity" required placeholder="In Quintals">
+                    </div>
+                </div>
+                <div style="display: flex; gap: 16px;">
+                    <div class="input-group" style="flex: 1;">
+                        <label>State</label>
+                        <input type="text" id="edit-crop-state" required placeholder="Select State" list="state-list" oninput="populateDistricts(this.value, 'edit-district-list', 'edit-crop-district')">
+                    </div>
+                    <div class="input-group" style="flex: 1;">
+                        <label>District</label>
+                        <input type="text" id="edit-crop-district" required placeholder="Select District" list="edit-district-list">
+                        <datalist id="edit-district-list"></datalist>
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label>Description</label>
+                    <textarea id="edit-crop-description" required placeholder="Detailed description..." style="width: 100%; padding: 14px 16px; background: hsla(0, 0%, 0%, 0.03); border: 1px solid hsla(0, 0%, 0%, 0.1); border-radius: 12px; color: var(--text-main); font-size: 1rem; font-family: 'Outfit', sans-serif; resize: vertical; min-height: 80px;"></textarea>
+                </div>
+                <div class="input-group">
+                    <label>Upload Media (Photos/Videos - Max 5)</label>
+                    <input type="file" id="edit-crop-media" accept="image/*,video/*" multiple style="width: 100%; padding: 10px; background: hsla(0, 0%, 0%, 0.03); border: 1px solid hsla(0, 0%, 0%, 0.1); border-radius: 12px; color: var(--text-main); font-family: 'Outfit', sans-serif;">
+                    <small style="color: var(--text-muted); margin-top: 4px; display: block;">Leave empty to keep current media</small>
+                </div>
+                <button type="submit" class="btn btn-primary w-100" style="margin-top: 10px;">Update Listing</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Chat Sidebar -->
+    <div id="chat-sidebar-overlay" class="chat-sidebar-overlay" onclick="toggleChatSidebar(event)">
+        <div class="chat-sidebar" onclick="event.stopPropagation()">
+            <div class="chat-sidebar-header">
+                <h2>Messages</h2>
+                <button class="close-btn" style="position: static;" onclick="toggleChatSidebar()">&times;</button>
+            </div>
+            <div class="conversations-list" id="conversations-list">
+                <!-- Injected via JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Farmer-Buyer Chat -->
+    <div id="farmer-chat-container" class="chat-popup-container">
+        <div class="chat-popup glass-panel">
+            <div class="chat-header">
+                <h3 id="chat-farmer-name"><span class="status-indicator"></span> Farmer Name</h3>
+                <button class="close-btn" style="position: static; background: rgba(0,0,0,0.1); color: white;" onclick="closeChatPopup()">&times;</button>
+            </div>
+            <div class="chat-messages" id="chat-messages">
+                <!-- Messages injected via JS -->
+            </div>
+            <div id="typing-indicator" class="typing-indicator">Farmer is typing...</div>
+            <form class="chat-input-area" onsubmit="event.preventDefault(); sendChatMessage();">
+                <input type="text" id="chat-input" class="chat-input" placeholder="Type a message..." autocomplete="off">
+                <button type="submit" class="btn btn-primary" style="padding: 8px 16px; border-radius: 12px;">Send</button>
             </form>
         </div>
     </div>
@@ -102,13 +178,92 @@
     <!-- AI Chatbot Trigger -->
     <div class="chatbot-trigger glass pulse" onclick="toggleChatbot()">🤖</div>
 
+    <!-- Personal Details Modal -->
+    <div id="personal-detail-modal" class="modal-overlay">
+        <div class="modal glass-panel slide-down">
+            <button class="close-btn" onclick="closeModal('personal-detail-modal')">&times;</button>
+            <h2>Personal Details</h2>
+            <p>Your account information</p>
+            <div style="background: var(--bg-input); padding: 20px; border-radius: 12px; margin-bottom: 24px; border: 1px solid var(--border-color);">
+                <div style="margin-bottom: 12px;">
+                    <label style="font-size: 0.85rem; color: var(--text-muted);">Full Name</label>
+                    <div style="font-size: 1.1rem; font-weight: 500;" id="personal-full-name">John Buyer</div>
+                </div>
+                <div style="margin-bottom: 12px;">
+                    <label style="font-size: 0.85rem; color: var(--text-muted);">Phone Number</label>
+                    <div style="font-size: 1.1rem; font-weight: 500;" id="personal-phone">+91 98765 43210</div>
+                </div>
+                <div>
+                    <label style="font-size: 0.85rem; color: var(--text-muted);">Account Type</label>
+                    <div style="font-size: 1.1rem; font-weight: 500; display: flex; align-items: center; gap: 6px;" id="personal-account-type">
+                        🛒 Buyer <span style="background: rgba(52, 211, 153, 0.2); color: #34d399; font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; font-weight: 700;">ACTIVE</span>
+                    </div>
+                </div>
+            </div>
+            <button class="btn btn-secondary w-100" onclick="switchModal('personal-detail-modal', 'change-password-modal')">Change Password</button>
+        </div>
+    </div>
+
+    <!-- Change Password Modal -->
+    <div id="change-password-modal" class="modal-overlay">
+        <div class="modal glass-panel slide-down">
+            <button class="close-btn" onclick="closeModal('change-password-modal')">&times;</button>
+            <h2>Change Password</h2>
+            <p>Select your preferred method to change password</p>
+            
+            <div class="role-selector" style="margin-bottom: 20px;">
+                <label class="role-option active" id="btn-changepwd-old" onclick="toggleChangePwdMethod('old')" style="padding: 10px;">
+                    <span class="icon" style="font-size: 1.2rem;">🔑</span> Old Password
+                </label>
+                <label class="role-option" id="btn-changepwd-otp" onclick="toggleChangePwdMethod('otp')" style="padding: 10px;">
+                    <span class="icon" style="font-size: 1.2rem;">📱</span> OTP
+                </label>
+            </div>
+
+            <!-- Old Password Form -->
+            <form id="changepwd-old-form">
+                <div class="input-group">
+                    <label>Current Password</label>
+                    <div class="password-wrapper">
+                        <input type="password" name="old-password" required placeholder="Enter current password">
+                        <button type="button" class="toggle-password" onclick="togglePassword(this)">👁️</button>
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label>New Password</label>
+                    <div class="password-wrapper">
+                        <input type="password" name="password" required placeholder="Enter new password">
+                        <button type="button" class="toggle-password" onclick="togglePassword(this)">👁️</button>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary w-100">Update Password</button>
+            </form>
+
+            <!-- OTP Form -->
+            <form id="changepwd-otp-form" style="display: none;">
+                <div class="input-group" id="changepwd-phone-group">
+                    <label>Phone Number</label>
+                    <input type="tel" id="changepwd-phone" required placeholder="Confirm your 10-digit phone number" value="9876543210">
+                </div>
+                <div id="changepwd-code-group" style="display: none;">
+                    <div class="input-group">
+                        <label>Enter OTP</label>
+                        <input type="text" id="changepwd-code" placeholder="Enter 6-digit OTP" inputmode="numeric" pattern="\d*" maxlength="6" oninput="this.value = this.value.replace(/[^0-9]/g, '');">
+                    </div>
+                    <div class="input-group">
+                        <label>New Password</label>
+                        <div class="password-wrapper">
+                            <input type="password" id="changepwd-new-password" placeholder="Enter new password">
+                            <button type="button" class="toggle-password" onclick="togglePassword(this)">👁️</button>
+                        </div>
+                    </div>
+                </div>
+                <button type="button" id="btn-send-changepwd-otp" class="btn btn-primary w-100" onclick="sendChangePwdOtp(event)">Send OTP</button>
+                <button type="submit" id="btn-verify-changepwd-otp" class="btn btn-primary w-100" style="display: none;">Verify & Update Password</button>
+            </form>
+        </div>
+    </div>
+
     <script src="js/main.js"></script>
-    <script>
-        document.getElementById('add-crop-form').addEventListener('submit', (e) => {
-            e.preventDefault();
-            alert("Crop Adding feature to be linked with Backend!");
-            closeModal('add-crop-modal');
-        });
-    </script>
 </body>
 </html>
