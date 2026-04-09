@@ -62,12 +62,12 @@
                 <form id="add-crop-form">
                     <div class="input-group">
                         <label>Crop Name</label>
-                        <input type="text" name="crop-name" id="add-crop-name-input" required placeholder="e.g. Organic Tomatoes" oninput="fetchPricingSuggestions()">
+                        <input type="text" name="crop-name" id="add-crop-name-input" required placeholder="e.g. Organic Tomatoes">
                     </div>
                     <div style="display: flex; gap: 16px;">
                         <div class="input-group" style="flex: 1;">
                             <label>Price (₹)</label>
-                            <input type="number" name="crop-price" id="add-crop-price-input" required placeholder="Per Quintal" oninput="updatePricingStatus()">
+                            <input type="number" name="crop-price" id="add-crop-price-input" required placeholder="Per Quintal">
                         </div>
                         <div class="input-group" style="flex: 1;">
                             <label>Quantity Available</label>
@@ -77,11 +77,11 @@
                     <div style="display: flex; gap: 16px;">
                         <div class="input-group" style="flex: 1;">
                             <label>State</label>
-                            <input type="text" id="add-crop-state" name="crop-state" list="state-list" required placeholder="Select State" oninput="populateDistricts(this.value, 'add-district-list', 'add-crop-district'); fetchPricingSuggestions();">
+                            <input type="text" id="add-crop-state" name="crop-state" list="state-list" required placeholder="Select State" oninput="populateDistricts(this.value, 'add-district-list', 'add-crop-district')">
                         </div>
                         <div class="input-group" style="flex: 1;">
                             <label>District</label>
-                            <input type="text" id="add-crop-district" name="crop-district" list="add-district-list" required placeholder="Select District" oninput="fetchPricingSuggestions()">
+                            <input type="text" id="add-crop-district" name="crop-district" list="add-district-list" required placeholder="Select District">
                             <datalist id="add-district-list"></datalist>
                         </div>
                     </div>
@@ -95,36 +95,6 @@
                     </div>
                     <button type="submit" class="btn btn-primary w-100" style="margin-top: 10px;">Post Listing</button>
                 </form>
-            </div>
-            <!-- Pricing Panel -->
-            <div id="pricing-panel" style="width: 280px; padding: 20px; background: hsla(142, 71%, 45%, 0.05); border: 1px solid hsla(142, 71%, 45%, 0.2); border-radius: 16px; display: none; flex-direction: column; gap: 16px;">
-                <h3 style="margin: 0; font-size: 1rem; color: var(--text-main);">🎯 Market Analysis</h3>
-                <div id="pricing-loading" style="text-align: center; color: var(--text-muted); font-size: 0.9rem;">Analyzing market...</div>
-                <div id="pricing-content" style="display: none; gap: 16px; display: flex; flex-direction: column;">
-                    <div>
-                        <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 4px;">Price Range</div>
-                        <div style="font-weight: 600; color: var(--primary); font-size: 1.1rem;">₹<span id="pricing-min">-</span> - ₹<span id="pricing-max">-</span></div>
-                    </div>
-                    <div>
-                        <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 4px;">Market Average</div>
-                        <div style="font-weight: 600; color: var(--text-main); font-size: 1rem;">₹<span id="pricing-avg">-</span></div>
-                    </div>
-                    <div>
-                        <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 4px;">Your Price Status</div>
-                        <div id="price-status-badge" style="display: inline-block; padding: 6px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: 600;">-</div>
-                    </div>
-                    <div>
-                        <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 4px;">Trend</div>
-                        <div style="font-weight: 600; color: var(--text-main);">
-                            <span id="trend-indicator">-</span>
-                            <span id="trend-pct" style="color: var(--primary);">-</span>
-                        </div>
-                    </div>
-                    <div id="pricing-reasoning" style="padding: 12px; background: white; border-radius: 8px; font-size: 0.85rem; color: var(--text-muted); border-left: 3px solid var(--primary);">
-                        -
-                    </div>
-                    <button type="button" onclick="applyMarketPrice()" class="btn btn-primary" style="width: 100%; padding: 10px; font-size: 0.9rem;">Use Market Rate</button>
-                </div>
             </div>
         </div>
     </div>

@@ -76,11 +76,7 @@
 			<version>3.0.0</version>
 		</dependency>
 
-		<!-- HTTP Client for Gemini API calls -->
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-webflux</artifactId>
-		</dependency>
+
 
 		<!-- JSON parsing -->
 		<dependency>
