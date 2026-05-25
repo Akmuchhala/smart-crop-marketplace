@@ -38,6 +38,16 @@ public class AuthController {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    @org.springframework.beans.factory.annotation.Value("${GOOGLE_GEMINI_API_KEY:your_google_gemini_api_key_here}")
+    private String geminiApiKey;
+
+    @GetMapping("/config")
+    public ResponseEntity<?> getConfig() {
+        Map<String, String> config = new HashMap<>();
+        config.put("geminiApiKey", geminiApiKey);
+        return ResponseEntity.ok(config);
+    }
+
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody User user) {
         if (userRepository.findByPhone(user.getPhone()).isPresent()) {

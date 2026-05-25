@@ -945,9 +945,7 @@ if (changePwdOtpForm) {
 }
 
 // ========== Chatbot Toggle ==========
-function toggleChatbot() {
-    showToast('Chatbot UI coming soon!', 'info', 2500);
-}
+// toggleChatbot() is now in ai-chat.js with full Gemini AI integration
 
 // ========== Navbar Scroll Effect ==========
 window.addEventListener('scroll', () => {
