@@ -1092,7 +1092,13 @@ document.addEventListener("DOMContentLoaded", () => {
                     body: JSON.stringify({ name, phone, password, role })
                 });
 
-                const data = await response.json(); // Handling response as JSON since our backend returns {jwt, user}
+                let data;
+                const text = await response.text();
+                try {
+                    data = JSON.parse(text);
+                } catch (e) {
+                    data = text;
+                }
                 
                 if (response.ok) {
                     showToast("Signup successful!", "success");
