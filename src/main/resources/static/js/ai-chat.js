@@ -28,7 +28,7 @@ Rules:
 - If a question is completely unrelated to agriculture, politely redirect the conversation to farming topics
 - Always be encouraging and supportive of farmers`;
 
-const API_BASE = "https://smartcrops-backend-we39.onrender.com";
+const chatbotApiBase = typeof API_BASE !== 'undefined' ? API_BASE : "https://smartcrops-backend-we39.onrender.com";
 
 // ========== Initialize Gemini ==========
 async function initGeminiAI() {
@@ -43,7 +43,7 @@ async function initGeminiAI() {
         let API_KEY = window.GEMINI_API_KEY || '';
         if (!API_KEY || API_KEY === 'your_google_gemini_api_key_here') {
             try {
-                const response = await fetch(`${API_BASE}/api/auth/config`);
+                const response = await fetch(`${chatbotApiBase}/api/auth/config`);
                 if (response.ok) {
                     const data = await response.json();
                     if (data && data.geminiApiKey && data.geminiApiKey !== 'your_google_gemini_api_key_here') {
