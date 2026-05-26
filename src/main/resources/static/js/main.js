@@ -67,8 +67,10 @@ async function uploadMediaList(fileInput) {
     const urls = [];
     const fileCount = Math.min(fileInput.files.length, 5);
     for (let i = 0; i < fileCount; i++) {
+        const file = fileInput.files[i];
+        showToast(`Uploading media ${i + 1} of ${fileCount}: ${file.name}...`, 'info', 2000);
         const formData = new FormData();
-        formData.append('file', fileInput.files[i]);
+        formData.append('file', file);
         try {
             const response = await fetch(`${API_BASE}/api/upload`, {
                 method: 'POST',
@@ -79,11 +81,11 @@ async function uploadMediaList(fileInput) {
                 const data = await response.json();
                 urls.push(data.url);
             } else {
-                showToast(`Failed to upload ${fileInput.files[i].name}. It might be too large.`, 'error');
+                showToast(`Failed to upload ${file.name}. It might be too large.`, 'error');
             }
         } catch(err) {
             console.error("Upload failed", err);
-            showToast(`Upload error for ${fileInput.files[i].name}`, 'error');
+            showToast(`Upload error for ${file.name}`, 'error');
         }
     }
     return urls;
@@ -97,14 +99,11 @@ function getMediaHTML(images, height = '200px', badgeHtml = '') {
     let slidesHtml = '';
     images.forEach((img, idx) => {
         const isActive = idx === 0 ? 'active' : '';
-        let mediaUrl = img;
-        if (img && img.startsWith('/uploads/')) {
-            mediaUrl = `${API_BASE}${img}`;
-        }
+        const mediaUrl = normalizeMediaUrl(img);
         const isVideo = mediaUrl.endsWith('.mp4') || mediaUrl.endsWith('.webm') || mediaUrl.endsWith('.mov') || mediaUrl.endsWith('.avi') || mediaUrl.includes('/video/upload/');
         
         if (isVideo) {
-            slidesHtml += `<div class="carousel-slide ${isActive}" style="background: #000;"><video src="${mediaUrl}" autoplay muted loop playsinline style="width: 100%; height: 100%; object-fit: cover;"></video></div>`;
+            slidesHtml += `<div class="carousel-slide ${isActive}" style="background: #000;"><video src="${mediaUrl}#t=0.001" autoplay muted loop playsinline style="width: 100%; height: 100%; object-fit: cover;"></video></div>`;
         } else {
             slidesHtml += `<div class="carousel-slide ${isActive}" style="background-image: url('${mediaUrl}');"></div>`;
         }
@@ -304,6 +303,27 @@ function selectRole(role) {
 
 // ========== Auth Logic & Database API ==========
 const API_BASE = "https://smartcrops-backend-we39.onrender.com";
+window.API_BASE = API_BASE;
+
+function normalizeMediaUrl(url) {
+    if (!url) return '';
+    let mediaUrl = url;
+    if (url.startsWith('/uploads/')) {
+        mediaUrl = `${API_BASE}${url}`;
+    }
+    // If it's a video on Cloudinary, force it to be .mp4 so browsers can play it
+    if (mediaUrl.includes('/video/upload/')) {
+        const parts = mediaUrl.split('.');
+        const lastPart = parts[parts.length - 1];
+        if (lastPart && lastPart.length <= 4 && !lastPart.includes('/')) {
+            parts[parts.length - 1] = 'mp4';
+            mediaUrl = parts.join('.');
+        } else {
+            mediaUrl = mediaUrl + '.mp4';
+        }
+    }
+    return mediaUrl;
+}
 
 const getAuthHeaders = () => {
     const token = sessionStorage.getItem('jwt');
@@ -517,14 +537,11 @@ function viewCropDetails(id, name, location, price, farmer, farmerPhone, image, 
         
         imagesData.forEach((img, idx) => {
             const isActive = idx === 0 ? 'active' : '';
-            let mediaUrl = img;
-            if (img && img.startsWith('/uploads/')) {
-                mediaUrl = `${API_BASE}${img}`;
-            }
+            const mediaUrl = normalizeMediaUrl(img);
             const isVideo = mediaUrl.endsWith('.mp4') || mediaUrl.endsWith('.webm') || mediaUrl.endsWith('.mov') || mediaUrl.endsWith('.avi') || mediaUrl.includes('/video/upload/');
             
             if (isVideo) {
-                track.innerHTML += `<div class="carousel-slide ${isActive}" style="background: #000;"><video src="${mediaUrl}" autoplay muted loop playsinline style="width: 100%; height: 100%; object-fit: cover;"></video></div>`;
+                track.innerHTML += `<div class="carousel-slide ${isActive}" style="background: #000;"><video src="${mediaUrl}#t=0.001" autoplay muted loop playsinline style="width: 100%; height: 100%; object-fit: cover;"></video></div>`;
             } else {
                 track.innerHTML += `<div class="carousel-slide ${isActive}" style="background-image: url('${mediaUrl}');"></div>`;
             }

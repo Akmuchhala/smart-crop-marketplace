@@ -22,7 +22,7 @@ public class CartService {
     private CropRepository cropRepository;
 
     /**
-     * Check if a file is a video based on extension
+     * Check if a file is a video based on extension or Cloudinary path
      */
     private boolean isVideoFile(String fileName) {
         if (fileName == null || fileName.isEmpty()) return false;
@@ -30,7 +30,8 @@ public class CartService {
         return lowerCase.endsWith(".mp4") || lowerCase.endsWith(".webm") ||
                lowerCase.endsWith(".avi") || lowerCase.endsWith(".mkv") ||
                lowerCase.endsWith(".mov") || lowerCase.endsWith(".flv") ||
-               lowerCase.endsWith(".wmv") || lowerCase.endsWith(".m4v");
+               lowerCase.endsWith(".wmv") || lowerCase.endsWith(".m4v") ||
+               lowerCase.contains("/video/upload/");
     }
 
     /**

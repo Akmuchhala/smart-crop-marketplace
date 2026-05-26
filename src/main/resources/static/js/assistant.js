@@ -28,7 +28,7 @@ Rules:
 - If a question is completely unrelated to agriculture, politely redirect the conversation to farming topics
 - Always be encouraging and supportive of farmers`;
 
-const chatbotApiBase = typeof API_BASE !== 'undefined' ? API_BASE : "https://smartcrops-backend-we39.onrender.com";
+const chatbotApiBase = window.API_BASE || "https://smartcrops-backend-we39.onrender.com";
 
 // ========== Initialize Gemini ==========
 async function initGeminiAI() {
