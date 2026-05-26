@@ -101,7 +101,7 @@ function getMediaHTML(images, height = '200px', badgeHtml = '') {
         if (img && img.startsWith('/uploads/')) {
             mediaUrl = `${API_BASE}${img}`;
         }
-        const isVideo = mediaUrl.endsWith('.mp4') || mediaUrl.endsWith('.webm') || mediaUrl.endsWith('.mov') || mediaUrl.endsWith('.avi');
+        const isVideo = mediaUrl.endsWith('.mp4') || mediaUrl.endsWith('.webm') || mediaUrl.endsWith('.mov') || mediaUrl.endsWith('.avi') || mediaUrl.includes('/video/upload/');
         
         if (isVideo) {
             slidesHtml += `<div class="carousel-slide ${isActive}" style="background: #000;"><video src="${mediaUrl}" autoplay muted loop playsinline style="width: 100%; height: 100%; object-fit: cover;"></video></div>`;
@@ -521,7 +521,7 @@ function viewCropDetails(id, name, location, price, farmer, farmerPhone, image, 
             if (img && img.startsWith('/uploads/')) {
                 mediaUrl = `${API_BASE}${img}`;
             }
-            const isVideo = mediaUrl.endsWith('.mp4') || mediaUrl.endsWith('.webm') || mediaUrl.endsWith('.mov') || mediaUrl.endsWith('.avi');
+            const isVideo = mediaUrl.endsWith('.mp4') || mediaUrl.endsWith('.webm') || mediaUrl.endsWith('.mov') || mediaUrl.endsWith('.avi') || mediaUrl.includes('/video/upload/');
             
             if (isVideo) {
                 track.innerHTML += `<div class="carousel-slide ${isActive}" style="background: #000;"><video src="${mediaUrl}" autoplay muted loop playsinline style="width: 100%; height: 100%; object-fit: cover;"></video></div>`;
