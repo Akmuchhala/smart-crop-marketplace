@@ -70,7 +70,7 @@ async function uploadMediaList(fileInput) {
         const formData = new FormData();
         formData.append('file', fileInput.files[i]);
         try {
-            const response = await fetch('/api/upload', {
+            const response = await fetch(`${API_BASE}/api/upload`, {
                 method: 'POST',
                 body: formData,
                 headers: { ...getAuthHeaders() }
@@ -344,7 +344,7 @@ async function loginUser(phone, password) {
 // ========== Crop Database API ==========
 async function getCropsFromDb() {
     try {
-        const response = await fetch('/api/crops', {
+        const response = await fetch(`${API_BASE}/api/crops`, {
             headers: { ...getAuthHeaders() }
         });
         if (!response.ok) throw new Error("Unauthorized");
@@ -357,7 +357,7 @@ async function getCropsFromDb() {
 
 async function getFarmerCropsFromApi(phone) {
     try {
-        const response = await fetch(`/api/crops/farmer/${phone}`, {
+        const response = await fetch(`${API_BASE}/api/crops/farmer/${phone}`, {
             headers: { ...getAuthHeaders() }
         });
         if (!response.ok) throw new Error("Unauthorized");
@@ -370,7 +370,7 @@ async function getFarmerCropsFromApi(phone) {
 
 async function addCropToDb(crop) {
     try {
-        const response = await fetch('/api/crops', {
+        const response = await fetch(`${API_BASE}/api/crops`, {
             method: 'POST',
             headers: { 
                 'Content-Type': 'application/json',
@@ -392,7 +392,7 @@ async function addCropToDb(crop) {
 
 async function removeCropFromDb(id) {
     try {
-        const response = await fetch(`/api/crops/${id}`, { 
+        const response = await fetch(`${API_BASE}/api/crops/${id}`, { 
             method: 'DELETE',
             headers: { ...getAuthHeaders() }
         });
@@ -1146,7 +1146,7 @@ document.addEventListener("DOMContentLoaded", () => {
             };
 
             try {
-                const response = await fetch(`/api/crops/${id}`, {
+                const response = await fetch(`${API_BASE}/api/crops/${id}`, {
                     method: 'PUT',
                     headers: { 
                         'Content-Type': 'application/json',
@@ -1350,7 +1350,7 @@ async function loadCartFromBackend() {
             return;
         }
 
-        const response = await fetch('/api/cart', {
+        const response = await fetch(`${API_BASE}/api/cart`, {
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${token}`,
@@ -1386,7 +1386,7 @@ async function addToCart(cropId) {
             return;
         }
 
-        const response = await fetch('/api/cart/add', {
+        const response = await fetch(`${API_BASE}/api/cart/add`, {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${token}`,
@@ -1425,7 +1425,7 @@ async function removeFromCart(cropId) {
         const token = getAuthToken();
         if (!token) return;
 
-        const response = await fetch(`/api/cart/remove/${cropId}`, {
+        const response = await fetch(`${API_BASE}/api/cart/remove/${cropId}`, {
             method: 'DELETE',
             headers: {
                 'Authorization': `Bearer ${token}`,
@@ -1442,7 +1442,7 @@ async function removeFromCart(cropId) {
         showToast('Item removed from cart', 'info');
     } catch (error) {
         console.error('Error removing from cart:', error);
-        showToast('Error removing item from cart', 'error');
+        showToast('Error removing from cart', 'error');
     }
 }
 
@@ -1459,7 +1459,7 @@ async function updateCartItemQuantity(cropId, newQuantity) {
             return;
         }
 
-        const response = await fetch(`/api/cart/update/${cropId}`, {
+        const response = await fetch(`${API_BASE}/api/cart/update/${cropId}`, {
             method: 'PUT',
             headers: {
                 'Authorization': `Bearer ${token}`,
@@ -1488,7 +1488,7 @@ async function updateCartItemQuantity(cropId, newQuantity) {
 async function viewCropDetailsFromCart(cropId) {
     try {
         // Fetch crop details
-        const response = await fetch('/api/crops');
+        const response = await fetch(`${API_BASE}/api/crops`);
         if (!response.ok) throw new Error('Failed to fetch crops');
 
         const crops = await response.json();
@@ -1740,7 +1740,7 @@ function toggleChatSidebar(e) {
 async function fetchConversations() {
     if (!currentUser.isLoggedIn) return;
     try {
-        const response = await fetch(`/api/chat/conversations?phone=${currentUser.phone}`, {
+        const response = await fetch(`${API_BASE}/api/chat/conversations?phone=${currentUser.phone}`, {
             headers: { ...getAuthHeaders() }
         });
         if (response.ok) {
@@ -1758,7 +1758,7 @@ async function deleteConversation(e, partnerPhone, cropId) {
     if (!confirm("Are you sure you want to delete this entire chat conversation? This cannot be undone.")) return;
 
     try {
-        const response = await fetch(`/api/chat/conversation?phone=${currentUser.phone}&partnerPhone=${partnerPhone}&cropId=${cropId}`, {
+        const response = await fetch(`${API_BASE}/api/chat/conversation?phone=${currentUser.phone}&partnerPhone=${partnerPhone}&cropId=${cropId}`, {
             method: 'DELETE',
             headers: { ...getAuthHeaders() }
         });
@@ -1855,7 +1855,7 @@ async function openChatPopup(partnerPhone, cropId, cropName, partnerName, partne
 async function fetchChatHistory() {
     if (!activeChatPartner || !activeChatCropId) return;
     try {
-        const response = await fetch(`/api/chat/history?cropId=${activeChatCropId}&user1=${currentUser.phone}&user2=${activeChatPartner}`, {
+        const response = await fetch(`${API_BASE}/api/chat/history?cropId=${activeChatCropId}&user1=${currentUser.phone}&user2=${activeChatPartner}`, {
             headers: { ...getAuthHeaders() }
         });
         if (response.ok) {
@@ -1931,7 +1931,7 @@ async function sendChatMessage() {
 
     input.value = '';
     try {
-        const response = await fetch('/api/chat', {
+        const response = await fetch(`${API_BASE}/api/chat`, {
             method: 'POST',
             headers: { 
                 'Content-Type': 'application/json',
