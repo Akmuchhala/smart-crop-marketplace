@@ -298,6 +298,8 @@ function selectRole(role) {
 }
 
 // ========== Auth Logic & Database API ==========
+const API_BASE = "https://smartcrops-backend-we39.onrender.com";
+
 const getAuthHeaders = () => {
     const token = sessionStorage.getItem('jwt');
     return token ? { 'Authorization': `Bearer ${token}` } : {};
@@ -305,7 +307,7 @@ const getAuthHeaders = () => {
 
 async function registerUser(userData) {
     try {
-        const response = await fetch('/api/auth/register', {
+        const response = await fetch(`${API_BASE}/api/auth/register`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(userData)
@@ -323,7 +325,7 @@ async function registerUser(userData) {
 
 async function loginUser(phone, password) {
     try {
-        const response = await fetch('/api/auth/login', {
+        const response = await fetch(`${API_BASE}/api/auth/login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ phone, password })
@@ -840,7 +842,7 @@ if (changePwdOldForm) {
         }
 
         try {
-            const response = await fetch('/api/auth/change-password', {
+            const response = await fetch(`${API_BASE}/api/auth/change-password`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${sessionStorage.getItem('jwt')}`,
@@ -906,7 +908,7 @@ if (changePwdOtpForm) {
             // In production, you'd verify the OTP code instead
             const oldPassword = document.getElementById('changepwd-old-password-otp')?.value || '';
 
-            const response = await fetch('/api/auth/change-password', {
+            const response = await fetch(`${API_BASE}/api/auth/change-password`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${sessionStorage.getItem('jwt')}`,
@@ -1086,7 +1088,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const role = document.querySelector(".role-selected")?.innerText.toUpperCase().trim() || "FARMER";
 
             try {
-                const response = await fetch("/api/auth/register", {
+                const response = await fetch(`${API_BASE}/api/auth/register`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ name, phone, password, role })
