@@ -1,7 +1,2 @@
-# Cloudflare Pages Proxy Redirect Rules
-# Replace 'https://smartcrops-backend.koyeb.app' with your actual deployed Koyeb API URL.
-# This proxies any request from the frontend to '/api/*' straight to your backend,
-# eliminating CORS problems and keeping relative URLs working.
-
-/api/* https://smartcrops-backend.koyeb.app/api/:splat 200
-/uploads/* https://smartcrops-backend.koyeb.app/uploads/:splat 200
+/api/* https://smartcrops-backend-we39.onrender.com/api/:splat 200
+/uploads/* https://smartcrops-backend-we39.onrender.com/uploads/:splat 200
