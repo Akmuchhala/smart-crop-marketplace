@@ -1313,11 +1313,11 @@ function handleBuyerSearch() {
         cropCards.forEach((card, index) => { card.style.order = index; });
     } else {
         let sorted = [...cropCards].sort((a, b) => {
-            // Extract the price value using regex from the text (e.g. ₹1,500)
-            let matchA = a.innerText.match(/₹([\d,]+)/);
-            let matchB = b.innerText.match(/₹([\d,]+)/);
-            let numA = matchA ? parseInt(matchA[1].replace(/,/g, '')) : 0;
-            let numB = matchB ? parseInt(matchB[1].replace(/,/g, '')) : 0;
+            // Extract the price value using regex safely, supporting decimals and commas (e.g. ₹1,500.50)
+            let matchA = a.innerText.match(/₹([\d.,]+)/);
+            let matchB = b.innerText.match(/₹([\d.,]+)/);
+            let numA = (matchA && matchA[1]) ? parseFloat(matchA[1].replace(/,/g, '')) : 0;
+            let numB = (matchB && matchB[1]) ? parseFloat(matchB[1].replace(/,/g, '')) : 0;
             
             if (sortFilter === 'price-low') {
                 return numA - numB;
