@@ -517,12 +517,16 @@ function viewCropDetails(id, name, location, price, farmer, farmerPhone, image, 
         
         imagesData.forEach((img, idx) => {
             const isActive = idx === 0 ? 'active' : '';
-            const isVideo = img.endsWith('.mp4') || img.endsWith('.webm') || img.endsWith('.mov') || img.endsWith('.avi');
+            let mediaUrl = img;
+            if (img && img.startsWith('/uploads/')) {
+                mediaUrl = `${API_BASE}${img}`;
+            }
+            const isVideo = mediaUrl.endsWith('.mp4') || mediaUrl.endsWith('.webm') || mediaUrl.endsWith('.mov') || mediaUrl.endsWith('.avi');
             
             if (isVideo) {
-                track.innerHTML += `<div class="carousel-slide ${isActive}" style="background: #000;"><video src="${img}" autoplay muted loop playsinline style="width: 100%; height: 100%; object-fit: cover;"></video></div>`;
+                track.innerHTML += `<div class="carousel-slide ${isActive}" style="background: #000;"><video src="${mediaUrl}" autoplay muted loop playsinline style="width: 100%; height: 100%; object-fit: cover;"></video></div>`;
             } else {
-                track.innerHTML += `<div class="carousel-slide ${isActive}" style="background-image: url('${img}');"></div>`;
+                track.innerHTML += `<div class="carousel-slide ${isActive}" style="background-image: url('${mediaUrl}');"></div>`;
             }
             
             dotsContainer.innerHTML += `<div class="carousel-dot ${isActive}" onclick="goToSlide(this.parentElement.parentElement, ${idx})"></div>`;
@@ -1562,10 +1566,17 @@ function updateCartUI() {
         const itemSubtotal = (item.price || 0) * (item.quantity || 0);
         cartTotal += itemSubtotal;
 
+        let cartImgUrl = item.image;
+        if (cartImgUrl && cartImgUrl.startsWith('/uploads/')) {
+            cartImgUrl = `${API_BASE}${cartImgUrl}`;
+        } else if (!cartImgUrl) {
+            cartImgUrl = 'https://images.unsplash.com/photo-1500937386664-56d1dfef3854?auto=format&fit=crop&w=600';
+        }
+
         container.innerHTML += `
             <div class="cart-item fade-in" style="display: flex; gap: 12px; padding: 12px; margin-bottom: 8px; background: var(--bg-card); border-radius: 8px; cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='var(--bg-hover)'" onmouseout="this.style.background='var(--bg-card)'">
                 <div style="width: 90px; height: 90px; flex-shrink: 0; border-radius: 8px; overflow: hidden; background: var(--bg-hover);">
-                    <img src="${item.image || '/images/placeholder.jpg'}" alt="${item.cropName}" style="width: 100%; height: 100%; object-fit: cover; cursor: pointer;" onclick="closeCart(); viewCropDetailsFromCart('${item.cropId}')">
+                    <img src="${cartImgUrl}" alt="${item.cropName}" style="width: 100%; height: 100%; object-fit: cover; cursor: pointer;" onclick="closeCart(); viewCropDetailsFromCart('${item.cropId}')">
                 </div>
                 <div class="cart-item-info" style="flex: 1;">
                     <h4 style="margin: 0 0 6px 0; font-size: 0.95rem; cursor: pointer; color: var(--primary);" onclick="closeCart(); viewCropDetailsFromCart('${item.cropId}')">${item.cropName}</h4>
