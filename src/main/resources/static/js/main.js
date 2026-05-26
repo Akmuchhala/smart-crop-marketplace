@@ -76,7 +76,8 @@ async function uploadMediaList(fileInput) {
                 headers: { ...getAuthHeaders() }
             });
             if (response.ok) {
-                urls.push(await response.text());
+                const data = await response.json();
+                urls.push(data.url);
             } else {
                 showToast(`Failed to upload ${fileInput.files[i].name}. It might be too large.`, 'error');
             }
