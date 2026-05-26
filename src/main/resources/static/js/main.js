@@ -622,7 +622,7 @@ function renderAccountMenu() {
     const container = document.getElementById('account-dropdown-menu');
     if (!container) return;
 
-    const isFarmerDashboard = window.location.pathname.includes('farmer-dashboard.html');
+    const isFarmerDashboard = window.location.pathname.includes('farmer-dashboard');
     
     // If we're on the Farmer Dashboard, we MUST be a logged-in Farmer
     if (isFarmerDashboard) {
@@ -702,7 +702,7 @@ function login(data) {
     sessionStorage.setItem('jwt', jwt);
     sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
     
-    const isIndexPage = window.location.pathname.includes('index.html') || window.location.pathname === '/' || window.location.pathname === '';
+    const isIndexPage = window.location.pathname.includes('index') || window.location.pathname === '/' || window.location.pathname === '';
 
     if (isIndexPage) {
         // Redirect to appropriate dashboard from the landing page
@@ -719,7 +719,7 @@ function login(data) {
 }
 
 function logout() {
-    const isFarmerDashboard = window.location.pathname.includes('farmer-dashboard.html');
+    const isDashboardPage = window.location.pathname.includes('farmer-dashboard') || window.location.pathname.includes('buyer-dashboard');
 
     // Clear user authentication
     currentUser.isLoggedIn = false;
@@ -770,7 +770,7 @@ function logout() {
     // Close any open sidebars
     closeCart();
 
-    if (isFarmerDashboard) {
+    if (isDashboardPage) {
         // Redirect to home if logging out from a restricted area
         window.location.href = 'index.html';
     } else {
