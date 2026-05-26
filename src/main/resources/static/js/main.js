@@ -62,12 +62,72 @@ function populateDistricts(selectedState, districtListId, districtInputId) {
     }
 }
 
+async function compressImageIfNeeded(file, maxSizeMb = 1.5) {
+    if (!file.type.startsWith('image/')) return file;
+    
+    const maxSizeBytes = maxSizeMb * 1024 * 1024;
+    if (file.size <= maxSizeBytes) return file;
+    
+    console.log(`Compressing ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB) to stay under limits...`);
+    
+    return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            const img = new Image();
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                let width = img.width;
+                let height = img.height;
+                
+                const MAX_WIDTH = 1920;
+                const MAX_HEIGHT = 1080;
+                
+                if (width > MAX_WIDTH) {
+                    height = Math.round((height * MAX_WIDTH) / width);
+                    width = MAX_WIDTH;
+                }
+                if (height > MAX_HEIGHT) {
+                    width = Math.round((width * MAX_HEIGHT) / height);
+                    height = MAX_HEIGHT;
+                }
+                
+                canvas.width = width;
+                canvas.height = height;
+                
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+                
+                canvas.toBlob((blob) => {
+                    if (!blob) {
+                        resolve(file);
+                        return;
+                    }
+                    const compressedFile = new File([blob], file.name, {
+                        type: 'image/jpeg',
+                        lastModified: Date.now()
+                    });
+                    console.log(`Compressed size: ${(compressedFile.size / 1024 / 1024).toFixed(2)} MB`);
+                    resolve(compressedFile);
+                }, 'image/jpeg', 0.75);
+            };
+            img.src = event.target.result;
+        };
+        reader.readAsDataURL(file);
+    });
+}
+
 async function uploadMediaList(fileInput) {
     if (!fileInput || !fileInput.files || fileInput.files.length === 0) return [];
     const urls = [];
     const fileCount = Math.min(fileInput.files.length, 5);
     for (let i = 0; i < fileCount; i++) {
-        const file = fileInput.files[i];
+        let file = fileInput.files[i];
+        
+        // Compress image if needed
+        if (file.type.startsWith('image/')) {
+            file = await compressImageIfNeeded(file);
+        }
+        
         showToast(`Uploading media ${i + 1} of ${fileCount}: ${file.name}...`, 'info', 2000);
         const formData = new FormData();
         formData.append('file', file);
