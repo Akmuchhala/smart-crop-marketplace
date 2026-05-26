@@ -163,7 +163,7 @@ function getMediaHTML(images, height = '200px', badgeHtml = '') {
         const isVideo = mediaUrl.endsWith('.mp4') || mediaUrl.endsWith('.webm') || mediaUrl.endsWith('.mov') || mediaUrl.endsWith('.avi') || mediaUrl.includes('/video/upload/');
         
         if (isVideo) {
-            slidesHtml += `<div class="carousel-slide ${isActive}" style="background: #000;"><video src="${mediaUrl}#t=0.001" autoplay muted loop playsinline style="width: 100%; height: 100%; object-fit: cover;"></video></div>`;
+            slidesHtml += `<div class="carousel-slide ${isActive}" style="background: #000;"><video autoplay muted loop playsinline preload="auto" style="width: 100%; height: 100%; object-fit: cover;"><source src="${mediaUrl}#t=0.001" type="video/mp4"></video></div>`;
         } else {
             slidesHtml += `<div class="carousel-slide ${isActive}" style="background-image: url('${mediaUrl}');"></div>`;
         }
@@ -601,7 +601,7 @@ function viewCropDetails(id, name, location, price, farmer, farmerPhone, image, 
             const isVideo = mediaUrl.endsWith('.mp4') || mediaUrl.endsWith('.webm') || mediaUrl.endsWith('.mov') || mediaUrl.endsWith('.avi') || mediaUrl.includes('/video/upload/');
             
             if (isVideo) {
-                track.innerHTML += `<div class="carousel-slide ${isActive}" style="background: #000;"><video src="${mediaUrl}#t=0.001" autoplay muted loop playsinline style="width: 100%; height: 100%; object-fit: cover;"></video></div>`;
+                track.innerHTML += `<div class="carousel-slide ${isActive}" style="background: #000;"><video autoplay muted loop playsinline preload="auto" style="width: 100%; height: 100%; object-fit: cover;"><source src="${mediaUrl}#t=0.001" type="video/mp4"></video></div>`;
             } else {
                 track.innerHTML += `<div class="carousel-slide ${isActive}" style="background-image: url('${mediaUrl}');"></div>`;
             }

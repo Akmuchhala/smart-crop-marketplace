@@ -27,7 +27,16 @@ public class CloudinaryService {
                 ObjectUtils.asMap("resource_type", resourceType)
             );
 
-            return uploadResult.get("secure_url").toString();
+            String secureUrl = uploadResult.get("secure_url").toString();
+            if ("video".equals(resourceType)) {
+                int lastDot = secureUrl.lastIndexOf('.');
+                if (lastDot != -1) {
+                    secureUrl = secureUrl.substring(0, lastDot) + ".mp4";
+                } else {
+                    secureUrl = secureUrl + ".mp4";
+                }
+            }
+            return secureUrl;
         } catch (Exception e) {
             e.printStackTrace();
             throw new RuntimeException("File upload failed");
