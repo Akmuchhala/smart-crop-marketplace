@@ -116,6 +116,22 @@ async function compressImageIfNeeded(file, maxSizeMb = 1.5) {
     });
 }
 
+// Helper: detect if a URL is a video
+function isVideoUrl(url) {
+    if (!url) return false;
+    const lower = url.toLowerCase();
+    return lower.endsWith('.mp4') || lower.endsWith('.webm') || lower.endsWith('.mov') || lower.endsWith('.avi') || lower.includes('/video/upload/');
+}
+
+// Sort media URLs so videos always come first (video = card face)
+function sortMediaVideosFirst(urls) {
+    return [...urls].sort((a, b) => {
+        const aVideo = isVideoUrl(a) ? 0 : 1;
+        const bVideo = isVideoUrl(b) ? 0 : 1;
+        return aVideo - bVideo;
+    });
+}
+
 async function uploadMediaList(fileInput) {
     if (!fileInput || !fileInput.files || fileInput.files.length === 0) return [];
     const urls = [];
@@ -148,7 +164,8 @@ async function uploadMediaList(fileInput) {
             showToast(`Upload error for ${file.name}`, 'error');
         }
     }
-    return urls;
+    // Sort so videos come first — video becomes the card face
+    return sortMediaVideosFirst(urls);
 }
 
 function getMediaHTML(images, height = '200px', badgeHtml = '') {
@@ -156,13 +173,15 @@ function getMediaHTML(images, height = '200px', badgeHtml = '') {
         images = ['https://images.unsplash.com/photo-1500937386664-56d1dfef3854?auto=format&fit=crop&w=600'];
     }
 
+    // Always sort so videos appear first (video = card face)
+    images = sortMediaVideosFirst(images);
+
     let slidesHtml = '';
     images.forEach((img, idx) => {
         const isActive = idx === 0 ? 'active' : '';
         const mediaUrl = normalizeMediaUrl(img);
-        const isVideo = mediaUrl.endsWith('.mp4') || mediaUrl.endsWith('.webm') || mediaUrl.endsWith('.mov') || mediaUrl.endsWith('.avi') || mediaUrl.includes('/video/upload/');
         
-        if (isVideo) {
+        if (isVideoUrl(mediaUrl)) {
             slidesHtml += `<div class="carousel-slide ${isActive}" style="background: #000;"><video autoplay muted loop playsinline preload="auto" style="width: 100%; height: 100%; object-fit: cover;"><source src="${mediaUrl}#t=0.001" type="video/mp4"></video></div>`;
         } else {
             slidesHtml += `<div class="carousel-slide ${isActive}" style="background-image: url('${mediaUrl}');"></div>`;
@@ -1218,8 +1237,11 @@ document.addEventListener("DOMContentLoaded", () => {
             let mainImage = existingCrop ? existingCrop.image : null;
             if (fileInput && fileInput.files.length > 0) {
                 mediaUrls = await uploadMediaList(fileInput);
-                mainImage = mediaUrls.length > 0 ? mediaUrls[0] : null;
+            } else {
+                // Even for existing media, ensure videos come first
+                mediaUrls = sortMediaVideosFirst(mediaUrls);
             }
+            mainImage = mediaUrls.length > 0 ? mediaUrls[0] : null;
 
             const updatedData = {
                 name: document.getElementById('edit-crop-name').value,
