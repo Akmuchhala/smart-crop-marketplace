@@ -96,12 +96,16 @@ function getMediaHTML(images, height = '200px', badgeHtml = '') {
     let slidesHtml = '';
     images.forEach((img, idx) => {
         const isActive = idx === 0 ? 'active' : '';
-        const isVideo = img.endsWith('.mp4') || img.endsWith('.webm') || img.endsWith('.mov') || img.endsWith('.avi');
+        let mediaUrl = img;
+        if (img && img.startsWith('/uploads/')) {
+            mediaUrl = `${API_BASE}${img}`;
+        }
+        const isVideo = mediaUrl.endsWith('.mp4') || mediaUrl.endsWith('.webm') || mediaUrl.endsWith('.mov') || mediaUrl.endsWith('.avi');
         
         if (isVideo) {
-            slidesHtml += `<div class="carousel-slide ${isActive}" style="background: #000;"><video src="${img}" autoplay muted loop playsinline style="width: 100%; height: 100%; object-fit: cover;"></video></div>`;
+            slidesHtml += `<div class="carousel-slide ${isActive}" style="background: #000;"><video src="${mediaUrl}" autoplay muted loop playsinline style="width: 100%; height: 100%; object-fit: cover;"></video></div>`;
         } else {
-            slidesHtml += `<div class="carousel-slide ${isActive}" style="background-image: url('${img}');"></div>`;
+            slidesHtml += `<div class="carousel-slide ${isActive}" style="background-image: url('${mediaUrl}');"></div>`;
         }
     });
 
