@@ -2082,3 +2082,15 @@ function stopConversationPolling() {
     if (conversationPollingInterval) clearInterval(conversationPollingInterval);
 }
 
+// ========== Mobile Menu Logic ==========
+window.toggleMobileMenu = function(menuId) {
+    const navLinks = document.querySelector('.nav-links');
+    const navActions = document.querySelector('.nav-actions');
+    
+    if (navLinks) {
+        navLinks.classList.toggle('mobile-menu-active');
+    }
+    if (navActions) {
+        navActions.classList.toggle('mobile-menu-active');
+    }
+};
