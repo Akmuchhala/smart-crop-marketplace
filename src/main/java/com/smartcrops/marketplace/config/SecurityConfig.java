@@ -52,7 +52,9 @@ public class SecurityConfig {
                     "/css/**", 
                     "/js/**", 
                     "/assets/**", 
-                    "/*.html"
+                    "/*.html",
+                    "/ping",
+                    "/health"
                 ).permitAll()
                 .anyRequest().authenticated()
             )
